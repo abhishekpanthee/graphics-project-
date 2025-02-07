@@ -1,59 +1,45 @@
 import pygame
-import OpenGL.GL as gl
-from menu import main_menu
-from config import WIDTH, HEIGHT, FPS
-from mandelbrot import draw_mandelbrot_animation
-from julia import draw_julia_animation
-from sierpinski import draw_sierpinski_animation
-from tesseract import tesseract_animation
+from fractals.mandelbrot import Mandelbrot
+from fractals.julia import Julia
+from shapes.sierpinski import Sierpinski
+from utils.graphics import init_window
 
+# Initialize pygame
 pygame.init()
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 2)
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 1)
-pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_COMPATIBILITY)
+screen = init_window("Interactive Fractal Art", (800, 600))
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.OPENGL | pygame.DOUBLEBUF)
+# Menu options
+options = ["Mandelbrot", "Julia", "Sierpinski 3D", "Exit"]
+selected = 0
 
+def draw_menu():
+    screen.fill((0, 0, 30))
+    font = pygame.font.Font(None, 40)
+    for i, opt in enumerate(options):
+        color = (255, 255, 255) if i == selected else (100, 100, 100)
+        text = font.render(opt, True, color)
+        screen.blit(text, (350, 200 + i * 50))
+    pygame.display.flip()
 
-pygame.display.set_caption("Fractal Art Game")
+running = True
+while running:
+    draw_menu()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                selected = (selected + 1) % len(options)
+            elif event.key == pygame.K_UP:
+                selected = (selected - 1) % len(options)
+            elif event.key == pygame.K_RETURN:
+                if selected == 0:
+                    Mandelbrot(screen).run()
+                elif selected == 1:
+                    Julia(screen).run()
+                elif selected == 2:
+                    Sierpinski(screen).run()
+                elif selected == 3:
+                    running = False
 
-def main():
-    clock = pygame.time.Clock()
-    current_fractal = main_menu(screen)
-    
-    zoom_factor = 1.0
-    offset_x = offset_y = 0.0
-    rotation_angle = 0.0
-    zoom_increment = 0.05  # Speed of zooming
-    
-    while True:
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-        
-        if current_fractal == 0:
-            # Animated Mandelbrot
-            draw_mandelbrot_animation(zoom_factor, offset_x, offset_y)
-            zoom_factor += zoom_increment
-            if zoom_factor > 2.5:
-                zoom_factor = 1.0  # Reset zoom after reaching a limit
-
-        elif current_fractal == 1:
-            # Animated Julia set
-            draw_julia_animation(zoom_factor, offset_x, offset_y)
-            zoom_factor += zoom_increment
-            if zoom_factor > 2.5:
-                zoom_factor = 1.0
-
-        elif current_fractal == 2:
-            # Animated Sierpinski Triangle
-            rotation_angle += 1  # Rotate triangle over time
-            draw_sierpinski_animation(rotation_angle)
-
-        elif current_fractal == 3:
-            # Animated 4D Tesseract
-            tesseract_animation()
-
-        pygame.display.flip()
-        clock.tick(FPS)
-
-if __name__ == "__main__":
-    main()
+pygame.quit()

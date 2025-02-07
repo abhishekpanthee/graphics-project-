@@ -1,4 +1,4 @@
-#!/home/abhi/Documents/datascience/graphcs-project/venv/bin/python3
+#!/home/abhi/graphics-project-/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

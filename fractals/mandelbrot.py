@@ -1,7 +1,10 @@
 import pygame
 import numpy as np
+from utils.basicFunctions import draw_text
 
 class Mandelbrot:
+   
+
     def __init__(self, screen):
         self.screen = screen
         self.width, self.height = screen.get_size()
@@ -19,6 +22,7 @@ class Mandelbrot:
         return self.max_iter
 
     def render(self):
+        # draw_text(self.screen, "hello", (400, 300))
         for x in range(self.width):
             for y in range(self.height):
                 real = (x - self.width / 2) / (self.zoom * self.width) + self.offset_x
@@ -29,6 +33,7 @@ class Mandelbrot:
     def run(self):
         running = True
         while running:
+            self.screen.fill((0, 0, 0))
             self.render()
             pygame.display.flip()
             for event in pygame.event.get():

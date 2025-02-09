@@ -1,9 +1,9 @@
 import pygame
 import numpy as np
-from utils.basicFunctions import draw_text
+from turtle import *
 
+# turtle = Turtle()
 class Mandelbrot:
-   
 
     def __init__(self, screen):
         self.screen = screen
@@ -23,6 +23,8 @@ class Mandelbrot:
 
     def render(self):
         # draw_text(self.screen, "hello", (400, 300))
+        
+
         for x in range(self.width):
             for y in range(self.height):
                 real = (x - self.width / 2) / (self.zoom * self.width) + self.offset_x

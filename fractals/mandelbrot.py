@@ -48,7 +48,7 @@ void main() {
     }
     
     float t = float(i) / float(maxIter);
-    vec3 color = hsl_to_rgb(t, 1.0, 0.5);
+    vec3 color = hsl_to_rgb(t, 1.0, 0.6);
     fragColor = vec4(color, 1.0);
 }
 """
@@ -89,6 +89,7 @@ class Mandelbrot:
         self.max_iter = 256
         self.target_zoom = self.zoom
         self.target_offset = self.offset[:]
+        self.pan_speed = 0.1
 
     def render(self):
         glClear(GL_COLOR_BUFFER_BIT)
@@ -121,13 +122,21 @@ class Mandelbrot:
                         self.target_zoom *= 0.5
                     elif event.key == pygame.K_z:  # Zoom out
                         self.target_zoom /= 0.5
-                elif event.type == pygame.MOUSEMOTION:  # Update hover location
-                    x, y = event.pos
-                    self.hover_x = (x / self.width - 0.5) * self.zoom + self.offset[0]
-                    self.hover_y = ((self.height - y) / self.height - 0.5) * self.zoom + self.offset[1]
+                    elif event.key == pygame.K_LEFT:
+                        self.target_offset[0] -= self.pan_speed * self.zoom
+                    elif event.key == pygame.K_RIGHT:
+                        self.target_offset[0] += self.pan_speed * self.zoom
+                    elif event.key == pygame.K_UP:
+                        self.target_offset[1] += self.pan_speed * self.zoom
+                    elif event.key == pygame.K_DOWN:
+                        self.target_offset[1] -= self.pan_speed * self.zoom
                 elif event.type == pygame.MOUSEBUTTONDOWN:  # Left Click Zoom In
                     if event.button == 1:
-                        self.target_offset = [self.hover_x, self.hover_y]
+                        x, y = event.pos
+                        self.target_offset = [
+                            (x / self.width - 0.5) * self.zoom + self.offset[0],
+                            ((self.height - y) / self.height - 0.5) * self.zoom + self.offset[1]
+                        ]
                         self.target_zoom *= 0.5
 
             self.render()

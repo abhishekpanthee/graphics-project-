@@ -75,6 +75,7 @@ class Game:
         self.current_screen = "mandelbrot"
         self.mandelbrot = Mandelbrot()
         self.mandelbrot.run()
+        self.mandelbrot.zoom(3.0)
 
     def quit_game(self):
         """Exit game"""

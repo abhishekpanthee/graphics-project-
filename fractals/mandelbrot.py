@@ -1,11 +1,9 @@
-
-
 import pygame
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 import numpy as np
 
-# Vertex Shader (Basic Full-Screen Quad)
+# Vertex Shader (Full-Screen Quad)
 VERTEX_SHADER = """
 #version 330 core
 layout (location = 0) in vec2 pos;
@@ -16,7 +14,7 @@ void main() {
 }
 """
 
-# Fragment Shader (Mandelbrot Calculation)
+# Fragment Shader (Mandelbrot Calculation with HSL Color Mapping)
 FRAGMENT_SHADER = """
 #version 330 core
 in vec2 uv;
@@ -25,6 +23,20 @@ out vec4 fragColor;
 uniform float zoom;
 uniform vec2 offset;
 uniform int maxIter;
+
+vec3 hsl_to_rgb(float h, float s, float l) {
+    float c = (1.0 - abs(2.0 * l - 1.0)) * s;
+    float x = c * (1.0 - abs(mod(h * 6.0, 2.0) - 1.0));
+    float m = l - c / 2.0;
+    vec3 rgb;
+    if (h < 1.0/6.0) rgb = vec3(c, x, 0.0);
+    else if (h < 2.0/6.0) rgb = vec3(x, c, 0.0);
+    else if (h < 3.0/6.0) rgb = vec3(0.0, c, x);
+    else if (h < 4.0/6.0) rgb = vec3(0.0, x, c);
+    else if (h < 5.0/6.0) rgb = vec3(x, 0.0, c);
+    else rgb = vec3(c, 0.0, x);
+    return rgb + m;
+}
 
 void main() {
     vec2 c = (uv - vec2(0.5, 0.5)) * zoom + offset;
@@ -35,8 +47,9 @@ void main() {
         z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
     }
     
-    float color = float(i) / float(maxIter);
-    fragColor = vec4(color, color * 0.5, color * 0.2, 1.0);
+    float t = float(i) / float(maxIter);
+    vec3 color = hsl_to_rgb(t, 1.0, 0.5);
+    fragColor = vec4(color, 1.0);
 }
 """
 
@@ -58,7 +71,7 @@ class Mandelbrot:
         self.vao = glGenVertexArrays(1)
         self.vbo = glGenBuffers(1)
 
-        vertices = np.array([
+        vertices = np.array([ 
             -1, -1,   1, -1,   -1,  1,
             -1,  1,   1, -1,    1,  1
         ], dtype=np.float32)
@@ -74,9 +87,16 @@ class Mandelbrot:
         self.zoom = 3.0
         self.offset = [-0.5, 0.0]
         self.max_iter = 256
+        self.target_zoom = self.zoom
+        self.target_offset = self.offset[:]
 
     def render(self):
         glClear(GL_COLOR_BUFFER_BIT)
+
+        # Smooth zooming animation
+        self.zoom += (self.target_zoom - self.zoom) * 0.1
+        self.offset[0] += (self.target_offset[0] - self.offset[0]) * 0.1
+        self.offset[1] += (self.target_offset[1] - self.offset[1]) * 0.1
 
         # Update uniforms
         glUseProgram(self.shader)
@@ -97,20 +117,22 @@ class Mandelbrot:
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        self.offset[1] -= 0.1 * self.zoom
-                    elif event.key == pygame.K_DOWN:
-                        self.offset[1] += 0.1 * self.zoom
-                    elif event.key == pygame.K_LEFT:
-                        self.offset[0] -= 0.1 * self.zoom
-                    elif event.key == pygame.K_RIGHT:
-                        self.offset[0] += 0.1 * self.zoom
-                    elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
-                        self.zoom *= 0.8
-                    elif event.key == pygame.K_MINUS or event.key == pygame.K_UNDERSCORE:
-                        self.zoom /= 0.8
+                    if event.key == pygame.K_SPACE:  # Zoom in at the hover location
+                        self.target_zoom *= 0.5
+                    elif event.key == pygame.K_z:  # Zoom out
+                        self.target_zoom /= 0.5
+                elif event.type == pygame.MOUSEMOTION:  # Update hover location
+                    x, y = event.pos
+                    self.hover_x = (x / self.width - 0.5) * self.zoom + self.offset[0]
+                    self.hover_y = ((self.height - y) / self.height - 0.5) * self.zoom + self.offset[1]
+                elif event.type == pygame.MOUSEBUTTONDOWN:  # Left Click Zoom In
+                    if event.button == 1:
+                        self.target_offset = [self.hover_x, self.hover_y]
+                        self.target_zoom *= 0.5
 
             self.render()
-
+        
         pygame.quit()
 
+if __name__ == "__main__":
+    Mandelbrot().run()

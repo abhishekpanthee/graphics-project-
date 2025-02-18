@@ -1,6 +1,9 @@
 import pygame
 import random
+import math
+import time
 from OpenGL.GL import *
+from OpenGL.GLUT import *
 
 class BarnsleyFern:
     def __init__(self):
@@ -10,23 +13,29 @@ class BarnsleyFern:
         glViewport(0, 0, self.width, self.height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-
-        # Initial viewport settings
-        self.zoom = 1.0
-        self.offset_x, self.offset_y = 0.0, 0.0
+        
+        self.zoom = 0.5  
+        self.offset_x, self.offset_y = 1, -1  
         self.max_iterations = 50000
-
-        # 🌟 Modified for incremental generation
+        
         self.points = []
         self.iter_count = 0
-        self.x, self.y = 0.0, 0.0  # Start point
-        self.points_per_frame = 500  # 🔥 Generate 500 points per frame
+        self.x, self.y = 0.0, 0.0  
+        self.points_per_frame = 90
+        self.color_phase = 0  
+        
+        self.rotation_angle = 0
+        self.glow_intensity = 0.5
+        self.glow_direction = 1
+
+    
+        self.zoom_direction = 1  
+        self.last_zoom_time = time.time()  
 
     def generate_points(self):
-        """Incrementally generate 500 Barnsley Fern points per frame."""
         for _ in range(self.points_per_frame):
             if self.iter_count >= self.max_iterations:
-                return  # Stop when max iterations are reached
+                return  
 
             r = random.random()
             if r < 0.01:
@@ -40,28 +49,50 @@ class BarnsleyFern:
 
             self.points.append((xn, yn))
             self.x, self.y = xn, yn
-            self.iter_count += 1  # Keep track of generated points
+            self.iter_count += 1
 
     def render(self):
-        """Render the Barnsley Fern."""
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
 
-        # Apply zoom and movement transformation
+        if time.time() - self.last_zoom_time >= 4.5:  
+            self.zoom_direction *= -1  
+            self.last_zoom_time = time.time()
+
+        self.zoom += 0.0015 * self.zoom_direction  
+        self.zoom = max(0.4, min(1.0, self.zoom))  
+
         glScalef(self.zoom, self.zoom, 1.0)
         glTranslatef(self.offset_x, self.offset_y, 0)
 
+        self.rotation_angle += 0.03  
+        glRotatef(math.sin(self.rotation_angle) * 3, 0, 0, 1)
+
+
+        self.color_phase += 0.02
+        r = (math.sin(self.color_phase) + 1) / 2
+        g = (math.sin(self.color_phase + 2) + 1) / 2
+        b = (math.sin(self.color_phase + 4) + 1) / 2
+
+        self.glow_intensity += 0.02 * self.glow_direction
+        if self.glow_intensity >= 1 or self.glow_intensity <= 0.5:
+            self.glow_direction *= -1  
+
+
         glBegin(GL_POINTS)
-        glColor3f(0.0, 1.0, 0.0)  # Green color
+        for i, (x, y) in enumerate(self.points):
+            alpha = max(0.3, (i / len(self.points))) * self.glow_intensity  
+            glColor4f(r, g, b, alpha)
+            
+            x_wave = x + 0.005 * math.sin(y * 10 + self.color_phase)
+            y_wave = y + 0.005 * math.cos(x * 10 + self.color_phase)
 
-        for x, y in self.points:
-            glVertex2f((x - 2.5) / 2.5, y / 5.0)  # Normalized coordinates
-
+            glVertex2f((x_wave - 2.5) / 2.5, y_wave / 5.0)
         glEnd()
+        
         pygame.display.flip()
 
     def run(self):
-        """Main loop to handle input and rendering."""
         running = True
         while running:
             for event in pygame.event.get():
@@ -80,13 +111,15 @@ class BarnsleyFern:
                         self.max_iterations += 5000
                     elif event.key == pygame.K_s:
                         self.max_iterations = max(10000, self.max_iterations - 5000)
+                    elif event.key == pygame.K_ESCAPE:
+                        running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 4:  # Scroll up (Zoom in)
+                    if event.button == 4:  
                         self.zoom *= 1.1
-                    elif event.button == 5:  # Scroll down (Zoom out)
+                    elif event.button == 5:  
                         self.zoom *= 0.9
 
-            self.generate_points()  # 🔥 Now generates 500 points per frame
+            self.generate_points()
             self.render()
 
         pygame.quit()

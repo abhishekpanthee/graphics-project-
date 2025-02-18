@@ -5,7 +5,7 @@ from OpenGL.GLUT import *
 
 from fractals.mandelbrot import Mandelbrot
 from fractals.julia import Julia 
-
+from fractals.tricorn import Tricorn
 from fractals.barnsley_fern import BarnsleyFern
 
 
@@ -42,7 +42,8 @@ class Game:
             MenuOption("Mandelbrot", self.run_mandelbrot, (300, 450)),
             MenuOption("Julia Set", self.run_julia, (300, 400)),
             MenuOption("Barnsley Fern", self.run_barnsley_fern, (300, 350)),
-            MenuOption("Exit", self.quit_game, (300, 300))
+            MenuOption("Exit", self.quit_game, (300, 300)),
+            MenuOption("Tricorn", self.run_tricorn, (300, 250))
         ]
         
         self.running = True
@@ -65,18 +66,20 @@ class Game:
         self.current_screen = "mandelbrot"
         fractal = Mandelbrot()
         fractal.run()
+        self.current_screen = "menu" 
 
     def run_julia(self):
         self.current_screen = "julia"
         fractal = Julia()
         fractal.run()
+        self.current_screen = "menu" 
         
     def run_barnsley_fern(self):
        self.current_screen = "barnsley"
        fractal = BarnsleyFern()
        fractal.run()
- # Call the function to generate Barnsley Fern
-
+       self.current_screen = "menu" 
+  
 
     def quit_game(self):
         self.running = False
@@ -92,7 +95,8 @@ class Game:
                     self.selected_option = (self.selected_option + 1) % len(self.menu_options)
                 elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
                     self.menu_options[self.selected_option].action()
-
+                elif event.key == pygame.K_ESCAPE:
+                    self.current_screen = "menu"
     def run(self):
         while self.running:
             if self.current_screen == "menu":

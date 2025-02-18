@@ -4,7 +4,10 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 
 from fractals.mandelbrot import Mandelbrot
-from fractals.julia import Julia  # Import Julia class
+from fractals.julia import Julia 
+
+from fractals.barnsley_fern import BarnsleyFern
+
 
 class MenuOption:
     def __init__(self, text, action, position):
@@ -38,7 +41,8 @@ class Game:
         self.menu_options = [
             MenuOption("Mandelbrot", self.run_mandelbrot, (300, 450)),
             MenuOption("Julia Set", self.run_julia, (300, 400)),
-            MenuOption("Exit", self.quit_game, (300, 350))
+            MenuOption("Barnsley Fern", self.run_barnsley_fern, (300, 350)),
+            MenuOption("Exit", self.quit_game, (300, 300))
         ]
         
         self.running = True
@@ -66,6 +70,13 @@ class Game:
         self.current_screen = "julia"
         fractal = Julia()
         fractal.run()
+        
+    def run_barnsley_fern(self):
+       self.current_screen = "barnsley"
+       fractal = BarnsleyFern()
+       fractal.run()
+ # Call the function to generate Barnsley Fern
+
 
     def quit_game(self):
         self.running = False
